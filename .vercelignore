@@ -1,0 +1,22 @@
+# Ignore Python files
+*.py
+*.pyc
+__pycache__/
+requirements.txt
+pyproject.toml
+.python-version
+
+# Ignore development files
+*.log
+.env
+.env.local
+
+# Ignore other backends
+evaluator_backend.js
+evaluator.html
+evaluator_package.json
+start_evaluator.sh
+
+# Ignore templates (Flask)
+templates/
+
