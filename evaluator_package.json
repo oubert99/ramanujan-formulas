@@ -1,0 +1,33 @@
+{
+  "name": "ramajan-evaluator",
+  "version": "1.0.0",
+  "description": "Mathematical Approximation Evaluator with OpenRouter AI",
+  "main": "evaluator_backend.js",
+  "scripts": {
+    "start": "node evaluator_backend.js",
+    "dev": "nodemon evaluator_backend.js",
+    "test": "node -e \"console.log('Testing OpenRouter connection...'); require('./evaluator_backend.js');\""
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "mathematics",
+    "ai",
+    "openrouter",
+    "approximation",
+    "evaluation",
+    "claude"
+  ],
+  "author": "Ramajan Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

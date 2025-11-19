@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧮 Mathematical Approximation Evaluator | AI-Powered Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+            background-color: #0a0a0a;
+            color: #00ff41;
+            line-height: 1.4;
+            font-size: 14px;
+            min-height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 65, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.05) 0%, transparent 50%),
+                #0a0a0a;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 20px;
+            background: rgba(0, 255, 65, 0.02);
+        }
+
+        .ascii-logo {
+            color: #00ff41;
+            font-size: 10px;
+            line-height: 1;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            margin: 15px 0;
+            color: #00ff41;
+            font-weight: bold;
+        }
+
+        .blink {
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .instructions {
+            font-size: 12px;
+            color: #00cc33;
+            margin-top: 15px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-panel, .results-panel {
+            background: rgba(0, 20, 0, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 0;
+            padding: 25px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.1),
+                inset 0 0 20px rgba(0, 255, 65, 0.05);
+        }
+
+        .panel-header h2 {
+            color: #00ff41;
+            font-size: 12px;
+            line-height: 1;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .json-textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            resize: vertical;
+            min-height: 300px;
+        }
+
+        .json-textarea:focus {
+            outline: none;
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        .json-textarea::placeholder {
+            color: #006622;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 8px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .btn-secondary {
+            border-color: #00cc33;
+            color: #00cc33;
+            font-size: 11px;
+            padding: 6px 12px;
+        }
+
+        .btn-accent {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .evaluate-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 14px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .evaluate-btn.loading {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px rgba(0, 255, 65, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 65, 0.6); }
+            100% { box-shadow: 0 0 5px rgba(0, 255, 65, 0.3); }
+        }
+
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #006622;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #006622;
+        }
+
+        .rank {
+            background: #00ff41;
+            color: #000;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 12px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .expression-display {
+            margin-bottom: 15px;
+        }
+
+        .expression-label {
+            color: #00cc33;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .expression {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #006622;
+            color: #00ff41;
+            padding: 8px;
+            display: block;
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .evaluation-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #006622;
+        }
+
+        .evaluation-header {
+            color: #ffff00;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .evaluation-content {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #006622;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .evaluation-json {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #006622;
+            color: #00cc33;
+            padding: 10px;
+            font-size: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .metric-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #006622;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .metric-label {
+            color: #00cc33;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            color: #00ff41;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .recommendation {
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            border: 2px solid;
+        }
+
+        .recommendation.use {
+            color: #00ff41;
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .recommendation.improve {
+            color: #ffff00;
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+
+        .recommendation.discard {
+            color: #ff4444;
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .loading-state, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #00cc33;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .format-help {
+            margin: 15px 0;
+        }
+
+        .format-help summary {
+            color: #00cc33;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+
+        .format-help summary:hover {
+            color: #00ff41;
+        }
+
+        .format-example {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #006622;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #00cc33;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #006622;
+            border-radius: 0;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff41;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .ascii-logo {
+                font-size: 8px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 12px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .input-panel, .results-panel {
+                padding: 15px;
+            }
+            
+            .ascii-logo {
+                font-size: 6px;
+            }
+            
+            .json-textarea {
+                font-size: 11px;
+                min-height: 200px;
+            }
+        }
+
+        /* Selection styles */
+        ::selection {
+            background: rgba(0, 255, 65, 0.3);
+            color: #00ff41;
+        }
+
+        ::-moz-selection {
+            background: rgba(0, 255, 65, 0.3);
+            color: #00ff41;
+        }
+
+        /* Focus styles */
+        *:focus {
+            outline: 2px solid rgba(0, 255, 65, 0.5);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="ascii-logo">
+                <pre>
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║    ███████╗██╗   ██╗ █████╗ ██╗     ██╗   ██╗ █████╗ ████████╗ ██████╗ ██████╗║
+║    ██╔════╝██║   ██║██╔══██╗██║     ██║   ██║██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗║
+║    █████╗  ██║   ██║███████║██║     ██║   ██║███████║   ██║   ██║   ██║██████╔╝║
+║    ██╔══╝  ╚██╗ ██╔╝██╔══██║██║     ██║   ██║██╔══██║   ██║   ██║   ██║██╔══██╗║
+║    ███████╗ ╚████╔╝ ██║  ██║███████╗╚██████╔╝██║  ██║   ██║   ╚██████╔╝██║  ██║║
+║    ╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝║
+║                                                                              ║
+║    Mathematical Approximation Evaluator                                     ║
+║    AI-Powered Analysis & Validation                                         ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+                </pre>
+            </div>
+            
+            <div class="subtitle">
+                <span class="blink">⚡</span> Professional Mathematical Analysis <span class="blink">⚡</span>
+            </div>
+            
+            <div class="instructions">
+                <p>
+                    ┌─ Input mathematical approximations as JSON<br/>
+                    ├─ AI evaluates accuracy, efficiency, novelty & stability<br/>
+                    └─ Get professional recommendations and analysis
+                </p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-panel">
+                <div class="panel-header">
+                    <h2>
+                        ┌─────────────────────────────────────────┐<br/>
+                        │  📝 APPROXIMATION INPUT PANEL           │<br/>
+                        └─────────────────────────────────────────┘
+                    </h2>
+                </div>
+
+                <div class="input-controls">
+                    <button class="btn btn-secondary" onclick="loadExample()">
+                        📋 Load Example
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearInput()">
+                        🗑️ Clear
+                    </button>
+                    <button class="btn btn-accent" onclick="validateJSON()">
+                        ✓ Validate JSON
+                    </button>
+                    <button class="btn btn-secondary" onclick="testConnection()">
+                        🔗 Test API
+                    </button>
+                </div>
+
+                <textarea
+                    id="jsonInput"
+                    class="json-textarea"
+                    placeholder="Paste your mathematical approximations here as JSON array..."
+                    rows="15"
+                ></textarea>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <div class="format-help">
+                    <details>
+                        <summary>📖 Input Format Guide</summary>
+                        <div class="format-example">Expected JSON format:
+[
+  {
+    "expression": "mp.exp(mp.pi * mp.sqrt(522)) / (mp.sinh(mp.pi * mp.sqrt(522)) / 32)",
+    "value": "64.000000000000000000...",
+    "error": 2.8939799824289668e-61,
+    "iteration": 15,
+    "verified": true,
+    "oeis_status": "NOVEL",
+    "timestamp": "2025-11-19T18:43:04.760122"
+  }
+]
+
+Required fields:
+• expression: Mathematical expression (string)
+• value: Computed value (string/number)
+• error: Approximation error (number)
+
+Optional fields:
+• iteration: Discovery iteration
+• verified: Verification status
+• oeis_status: OEIS database status
+• timestamp: Discovery timestamp
+
+The AI evaluator will analyze:
+✓ Accuracy & Error bounds
+✓ Computational efficiency
+✓ Mathematical novelty
+✓ Convergence stability
+✓ Domain generality
+✓ Professional recommendation</div>
+                    </details>
+                </div>
+
+                <button 
+                    id="evaluateBtn"
+                    class="btn btn-primary evaluate-btn"
+                    onclick="evaluateApproximations()"
+                >
+                    🤖 EVALUATE WITH AI
+                </button>
+            </div>
+
+            <div class="results-panel">
+                <div class="panel-header">
+                    <h2>
+                        ┌─────────────────────────────────────────┐<br/>
+                        │  🧠 AI EVALUATION RESULTS               │<br/>
+                        └─────────────────────────────────────────┘
+                    </h2>
+                </div>
+
+                <div id="resultsContainer">
+                    <div class="empty-state">
+                        <pre>
+    No evaluations yet...
+    
+    ┌─────────────────────────────┐
+    │  Input mathematical         │
+    │  approximations and click   │
+    │  EVALUATE to get AI         │
+    │  analysis and recommendations│
+    └─────────────────────────────┘
+    
+         📝 → 🤖 → 📊 → ✅
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let evaluationResults = [];
+
+        // Example data
+        const exampleData = [
+            {
+                "expression": "mp.exp(mp.pi * mp.sqrt(522)) / (mp.sinh(mp.pi * mp.sqrt(522)) / 32)",
+                "value": "64.000000000000000000000000000000000000000000000000000000000000289397998242896671259361635333225519137512354795290965495819234757973776223252645023028179314378013094795610564233390776147464537129009527336578321078928927792897119872167772819761467536980161285156101039695924499304568768360412554309046437971142599441246541624151359772829713097161325419085629734071097024747038578630582245234329568918722774238485132867093924306525170602828204598881922253955301385127224637809119763784330598738277680675709720955462109961307346988560056042973694169448154438019778714859670269611974151691007394151625051487438405456274601925673569345417146979546601957227615052706522343546730320780327037071215596638780809071531481722849232563728183072164413220018438998950218321001615416738266610279756138384791551079664301901177400804166363118616672245917011231443180498380589788685889297057705568592719198798101372318931511057513593973934989010941031141386993031267390882812095749671438774093831031030103860692266211461729491698362312985175940678988627102236112240354302837888087095990701401337144822183769687363895356725600116940243312170328850173794090300274157172864160588034379484752897902903923731612430241176108573904189121144354620414840606497389009034456210547896501410860410316586157993498287175351729082825157979822267710856308869476348081100417672238669162999975555544398620306643191297087191130454177771110201472172930764660073639324741510320492922156223298904299611214414853387014737911260326130536277368",
+                "error": 2.8939799824289668e-61,
+                "iteration": 15,
+                "verified": true,
+                "oeis_status": "NOVEL",
+                "timestamp": "2025-11-19T18:43:04.760122"
+            },
+            {
+                "expression": "mp.exp(mp.pi * mp.sqrt(652)) / (mp.sinh(mp.pi * mp.sqrt(652)) / 48)",
+                "value": "96.0000000000000000000000000000000000000000000000000000000000000000000202072134778892254458568482925518083982993393990212057171728444381638029943253422230442911401756040677249113345942914631322321900994994969360671136236742944572822112542834602520624965316943331288606576642424971172194009830959664893511426209907800729950952575615896672655526292630989953999441956734774390490569514147163129721946459770691717833171796006241839728070581730116241480556014874403332046150291584314055588484788651552792700933678402902459672114313549366891085081553575759566498629440662753299759181849366776974170523120142275274491335431570025750451935651468578660006203959677394932751866923414921213846979992146639250263912447989222269939725528708682387806965548647264031807237384470242917761778591501532113539257408866499315730311598151653074469361273962122583117412312093983906572151184583325124013319244335571057827747874429974894163769762669325450758689469059958444945957733311834370894895023448907282919672600943877372093216874520239768267429352301865345853039912760285984361822229848904423745021382653397411614564882106915972417166705231346304719737370865762662257709104894260014893560743493139270694440663697607019822061231101820071809875914493519460826567831173957260380818552977187575244040158666574397508847450378132622804958118021542987265593538792887364528324640051757351486819241342381440362966191772872263034184081590363769212434439006984571286292256182020812827662463037688540219761193422966161236078866663",
+                "error": 2.0207213477889224e-68,
+                "iteration": 15,
+                "verified": true,
+                "oeis_status": "NOVEL",
+                "timestamp": "2025-11-19T18:43:05.526252"
+            }
+        ];
+
+        function loadExample() {
+            document.getElementById('jsonInput').value = JSON.stringify(exampleData, null, 2);
+            hideError();
+        }
+
+        function clearInput() {
+            document.getElementById('jsonInput').value = '';
+            hideError();
+        }
+
+        function validateJSON() {
+            const input = document.getElementById('jsonInput').value.trim();
+            if (!input) {
+                showError('Please enter JSON data first');
+                return false;
+            }
+
+            try {
+                const data = JSON.parse(input);
+                if (!Array.isArray(data)) {
+                    showError('Input must be a JSON array');
+                    return false;
+                }
+
+                for (let i = 0; i < data.length; i++) {
+                    const item = data[i];
+                    if (!item.expression || item.value === undefined || item.error === undefined) {
+                        showError(`Item ${i + 1}: Missing required fields (expression, value, error)`);
+                        return false;
+                    }
+                }
+
+                hideError();
+                showSuccess('✅ JSON is valid!');
+                return true;
+            } catch (e) {
+                showError('Invalid JSON format: ' + e.message);
+                return false;
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.style.color = '#00ff41';
+            errorDiv.style.borderColor = '#00ff41';
+            errorDiv.style.backgroundColor = 'rgba(0, 255, 65, 0.1)';
+            
+            setTimeout(() => {
+                hideError();
+                // Reset styles
+                errorDiv.style.color = '#ff4444';
+                errorDiv.style.borderColor = '#ff4444';
+                errorDiv.style.backgroundColor = 'rgba(255, 68, 68, 0.1)';
+            }, 3000);
+        }
+
+        async function evaluateApproximations() {
+            if (!validateJSON()) return;
+
+            const input = document.getElementById('jsonInput').value.trim();
+            const data = JSON.parse(input);
+            
+            const evaluateBtn = document.getElementById('evaluateBtn');
+            const originalText = evaluateBtn.innerHTML;
+            
+            // Show loading state
+            evaluateBtn.innerHTML = '<span class="spinner">⟳</span> EVALUATING WITH AI...';
+            evaluateBtn.classList.add('loading');
+            evaluateBtn.disabled = true;
+
+            // Show loading in results
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="loading-state">
+                    <div class="ascii-spinner">
+                        <pre>
+    ⟳ AI EVALUATION IN PROGRESS...
+    
+    ┌─────────────────────────────┐
+    │ Analyzing accuracy...       │
+    │ Checking efficiency...      │
+    │ Assessing novelty...        │
+    │ Testing stability...        │
+    │ Evaluating generality...    │
+    │ Generating recommendations..│
+    └─────────────────────────────┘
+                        </pre>
+                    </div>
+                </div>
+            `;
+
+            try {
+                // Call OpenRouter API for real AI evaluation
+                const results = await callOpenRouterAPI(data);
+                displayResults(results);
+            } catch (error) {
+                showError('Evaluation failed: ' + error.message);
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <pre>
+    ❌ EVALUATION FAILED
+    
+    ┌─────────────────────────────┐
+    │  Error occurred during      │
+    │  AI analysis. Please check  │
+    │  your input and try again.  │
+    └─────────────────────────────┘
+                        </pre>
+                    </div>
+                `;
+            } finally {
+                // Reset button
+                evaluateBtn.innerHTML = originalText;
+                evaluateBtn.classList.remove('loading');
+                evaluateBtn.disabled = false;
+            }
+        }
+
+        async function callOpenRouterAPI(data) {
+            try {
+                const response = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        approximations: data
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Evaluation failed');
+                }
+
+                return result.results;
+
+            } catch (error) {
+                console.error('OpenRouter API Error:', error);
+                throw error;
+            }
+        }
+
+        function displayResults(results) {
+            evaluationResults = results;
+            
+            if (results.length === 0) {
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <pre>No results to display</pre>
+                    </div>
+                `;
+                return;
+            }
+
+            const resultsHTML = results.map((result, index) => `
+                <div class="result-item">
+                    <div class="result-header">
+                        <div class="rank">#${index + 1}</div>
+                        <div style="flex: 1;">
+                            <strong>Approximation ${index + 1}</strong>
+                            ${result.oeis_status ? `<span style="color: #ffff00; margin-left: 10px;">[${result.oeis_status}]</span>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="expression-display">
+                        <div class="expression-label">Expression:</div>
+                        <code class="expression">${result.expression}</code>
+                    </div>
+
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-label">Value</div>
+                            <div class="metric-value">${parseFloat(result.value).toExponential(6)}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Error</div>
+                            <div class="metric-value">${result.error.toExponential(3)}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Iteration</div>
+                            <div class="metric-value">${result.iteration || 'N/A'}</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Verified</div>
+                            <div class="metric-value">${result.verified ? '✓' : '✗'}</div>
+                        </div>
+                    </div>
+
+                    <div class="evaluation-section">
+                        <div class="evaluation-header">🤖 AI EVALUATION ANALYSIS</div>
+                        
+                        <div class="evaluation-content">
+                            <strong>Accuracy:</strong> ${result.evaluation.accuracy}<br/>
+                            <strong>Efficiency:</strong> ${result.evaluation.efficiency}<br/>
+                            <strong>Novelty:</strong> ${result.evaluation.novelty}<br/>
+                            <strong>Stability:</strong> ${result.evaluation.stability}<br/>
+                            <strong>Generality:</strong> ${result.evaluation.generality}
+                        </div>
+
+                        <div class="recommendation ${result.evaluation.recommendation.toLowerCase()}">
+                            RECOMMENDATION: ${result.evaluation.recommendation.toUpperCase()}
+                        </div>
+
+                        <details style="margin-top: 10px;">
+                            <summary style="color: #00cc33; cursor: pointer;">📋 Raw Evaluation JSON</summary>
+                            <div class="evaluation-json">${JSON.stringify(result.evaluation, null, 2)}</div>
+                        </details>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="results-list">
+                    ${resultsHTML}
+                </div>
+            `;
+        }
+
+        async function testConnection() {
+            const testBtn = document.querySelector('button[onclick="testConnection()"]');
+            const originalText = testBtn.innerHTML;
+            
+            testBtn.innerHTML = '<span class="spinner">⟳</span> Testing...';
+            testBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/test-openrouter');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('🔗 OpenRouter API connection successful!');
+                } else {
+                    showError('API test failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Connection test failed: ' + error.message);
+            } finally {
+                testBtn.innerHTML = originalText;
+                testBtn.disabled = false;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-load example for demonstration
+            // loadExample();
+            
+            // Test API connection on startup
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>
