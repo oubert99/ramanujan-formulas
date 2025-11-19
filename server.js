@@ -177,7 +177,7 @@ For each approximation, you must respond with ONLY a valid JSON object in this e
 Be precise, technical, and provide specific mathematical insights. Focus on practical applicability and mathematical rigor.`;
     }
 
-    async evaluateApproximation(approximation) {
+    async evaluateApproximation(approximation, model = 'anthropic/claude-3.5-sonnet') {
         if (!OPENROUTER_API_KEY) {
             return {
                 accuracy: "Unable to analyze - OpenRouter API key not configured",
@@ -211,7 +211,7 @@ Provide a rigorous mathematical evaluation focusing on accuracy, efficiency, nov
                     'X-Title': 'Ramajan Mathematical Evaluator'
                 },
                 body: JSON.stringify({
-                    model: 'anthropic/claude-3.5-sonnet',
+                    model: model,
                     messages: [
                         {
                             role: 'user',
@@ -475,7 +475,8 @@ app.get('/api/examples', (req, res) => {
 // AI Evaluation endpoint
 app.post('/api/ai-evaluate', async (req, res) => {
   try {
-    const { results } = req.body;
+    const { results, model } = req.body;
+    const selectedModel = model || 'anthropic/claude-3.5-sonnet';
     
     if (!results || !Array.isArray(results)) {
       return res.status(400).json({ 
@@ -501,7 +502,7 @@ app.post('/api/ai-evaluate', async (req, res) => {
       console.log(`AI evaluating approximation ${i + 1}/${results.length}...`);
       
       try {
-        const aiEvaluation = await aiEvaluator.evaluateApproximation(result);
+        const aiEvaluation = await aiEvaluator.evaluateApproximation(result, selectedModel);
         evaluatedResults.push({
           ...result,
           aiEvaluation: aiEvaluation,
@@ -541,7 +542,7 @@ app.post('/api/ai-evaluate', async (req, res) => {
         totalApproximations: results.length,
         evaluationTimeMs: endTime - startTime,
         timestamp: new Date().toISOString(),
-        model: 'google/gemini-3-pro-preview',
+        model: selectedModel,
         provider: 'OpenRouter',
         aiEnabled: true
       }
