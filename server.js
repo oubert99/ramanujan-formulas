@@ -208,7 +208,7 @@ Provide a rigorous mathematical evaluation focusing on accuracy, efficiency, nov
                     'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                     'Content-Type': 'application/json',
                     'HTTP-Referer': 'https://ramajan-evaluator.local',
-                    'X-Title': 'Ramajan Mathematical Evaluator'
+                    'X-Title': 'Ramanujan Mathematical Evaluator'
                 },
                 body: JSON.stringify({
                     model: model,
@@ -574,7 +574,7 @@ app.get('/api/test-ai', async (req, res) => {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://ramajan-evaluator.local',
-        'X-Title': 'Ramajan Mathematical Evaluator'
+        'X-Title': 'Ramanujan Mathematical Evaluator'
       },
       body: JSON.stringify({
         model: 'anthropic/claude-3.5-sonnet',
@@ -638,12 +638,12 @@ app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║    ██████╗  █████╗ ███╗   ███╗ █████╗      ██╗ █████╗ ███╗   ██╗           ║
-║    ██╔══██╗██╔══██╗████╗ ████║██╔══██╗     ██║██╔══██╗████╗  ██║           ║
-║    ██████╔╝███████║██╔████╔██║███████║     ██║███████║██╔██╗ ██║           ║
-║    ██╔══██╗██╔══██║██║╚██╔╝██║██╔══██║██   ██║██╔══██║██║╚██╗██║           ║
-║    ██║  ██║██║  ██║██║ ╚═╝ ██║██║  ██║╚█████╔╝██║  ██║██║ ╚████║           ║
-║    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝           ║
+║  ██████╗  █████╗ ███╗   ███╗ █████╗ ███╗   ██╗██╗   ██╗     ██╗ █████╗ ███╗   ██╗  ║
+║  ██╔══██╗██╔══██╗████╗ ████║██╔══██╗████╗  ██║██║   ██║     ██║██╔══██╗████╗  ██║  ║
+║  ██████╔╝███████║██╔████╔██║███████║██╔██╗ ██║██║   ██║     ██║███████║██╔██╗ ██║  ║
+║  ██╔══██╗██╔══██║██║╚██╔╝██║██╔══██║██║╚██╗██║██║   ██║██   ██║██╔══██║██║╚██╗██║  ║
+║  ██║  ██║██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║╚██████╔╝╚█████╔╝██║  ██║██║ ╚████║  ║
+║  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝  ║
 ║                                                                              ║
 ║    Mathematical Approximation Evaluator                                     ║
 ║    Server running on port ${PORT}                                               ║
